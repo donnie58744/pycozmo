@@ -1,10 +1,17 @@
-import pycozmo, sys, json, asyncio, io, math, os
+import pycozmo
+import sys
+import json
+import asyncio
+import io
+import math
+import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 lib_path = os.path.join(current_dir, "..", "lib")
 sys.path.append(lib_path)
 
 import flask_helpers
+
 
 try: 
     from flask import Flask, request
@@ -25,7 +32,7 @@ DEBUG_ANNOTATIONS_DISABLED = 0
 DEBUG_ANNOTATIONS_ENABLED_VISION = 1
 DEBUG_ANNOTATIONS_ENABLED_ALL = 2
 
-"""
+""" TODO Fix RobotStateDisplay
 # Annotator for displaying RobotState (position, etc.) on top of the camera feed
 class RobotStateDisplay(pycozmo.annotate.Annotator):
     def apply(self, image, scale):
@@ -391,6 +398,7 @@ class RemoteControlCozmo:
 
         self.cozmo.drive_wheels(l_wheel_speed, r_wheel_speed, l_wheel_speed*4, r_wheel_speed*4 )
 
+
 def get_anim_sel_drop_down(selectorIndex):
     html_text = '''<select onchange="handleDropDownSelect(this)" name="animSelector''' + str(selectorIndex) + '''">'''
     i = 0
@@ -411,8 +419,10 @@ def get_anim_sel_drop_downs():
         html_text += str(key) + ''': ''' + get_anim_sel_drop_down(key) + '''<br>'''
     return html_text
 
+
 def to_js_bool_string(bool_value):
     return "true" if bool_value else "false"
+
 
 @flask_app.route("/")
 def handle_index_page():
@@ -688,6 +698,7 @@ def get_annotated_image():
     image = remote_control_cozmo.cozmo._latest_image
     return image
 
+
 def streaming_video(url_root):
     '''Video streaming generator function'''
     try:
@@ -706,6 +717,7 @@ def streaming_video(url_root):
         # Tell the main flask thread to shutdown
         requests.post(url_root + 'shutdown')
 
+
 def serve_single_image():
     if remote_control_cozmo:
         try:
@@ -716,9 +728,11 @@ def serve_single_image():
             requests.post('shutdown')
     return flask_helpers.serve_pil_image(_default_camera_image)
 
+
 def is_microsoft_browser(request):
     agent = request.user_agent.string
     return 'Edge/' in agent or 'MSIE ' in agent or 'Trident/' in agent
+
 
 @flask_app.route("/cozmoImage")
 def handle_cozmoImage():
@@ -726,18 +740,24 @@ def handle_cozmoImage():
         return serve_single_image()
     return flask_helpers.stream_video(streaming_video, request.url_root)
 
+
 def handle_key_event(key_request, is_key_down):
     message = json.loads(key_request.data.decode("utf-8"))
     if remote_control_cozmo:
-        remote_control_cozmo.handle_key(key_code=(message['keyCode']), is_shift_down=message['hasShift'],
-                                        is_ctrl_down=message['hasCtrl'], is_alt_down=message['hasAlt'],
-                                        is_key_down=is_key_down)
+        remote_control_cozmo.handle_key(key_code=(message['keyCode']),
+                                        is_shift_down=message['hasShift'],
+                                        is_ctrl_down=message['hasCtrl'], 
+                                        is_alt_down=message['hasAlt'],
+                                        is_key_down=is_key_down
+                                        )
     return ""
+
 
 @flask_app.route('/shutdown', methods=['POST'])
 def shutdown():
     flask_helpers.shutdown_flask(request)
     return ""
+
 
 @flask_app.route('/mousemove', methods=['POST'])
 def handle_mousemove():
@@ -749,6 +769,7 @@ def handle_mousemove():
                                           is_button_down=message['isButtonDown'])
     return ""
 
+
 @flask_app.route('/setMouseLookEnabled', methods=['POST'])
 def handle_setMouseLookEnabled():
     '''Called from Javascript whenever mouse-look mode is toggled'''
@@ -757,6 +778,7 @@ def handle_setMouseLookEnabled():
         remote_control_cozmo.set_mouse_look_enabled(is_mouse_look_enabled=message['isMouseLookEnabled'])
     return ""
 
+
 @flask_app.route('/setHeadlightEnabled', methods=['POST'])
 def handle_setHeadlightEnabled():
     '''Called from Javascript whenever headlight is toggled on/off'''
@@ -764,11 +786,12 @@ def handle_setHeadlightEnabled():
     if remote_control_cozmo:
         remote_control_cozmo.cozmo.set_head_light(enable=message['isHeadlightEnabled'])
         remote_control_cozmo.isHeadlightEnabled = not remote_control_cozmo.isHeadlightEnabled
-        if(remote_control_cozmo.isHeadlightEnabled):
+        if remote_control_cozmo.isHeadlightEnabled:
             remote_control_cozmo.cozmo.enable_camera(enable=True, color=False)
         else:
             remote_control_cozmo.cozmo.enable_camera(enable=True, color=True)
     return ""
+
 
 @flask_app.route('/setAreDebugAnnotationsEnabled', methods=['POST'])
 def handle_setAreDebugAnnotationsEnabled():
@@ -783,6 +806,7 @@ def handle_setAreDebugAnnotationsEnabled():
             remote_control_cozmo.cozmo.world.image_annotator.disable_annotator('robotState')
     return ""
 
+
 @flask_app.route('/setFreeplayEnabled', methods=['POST'])
 def handle_setFreeplayEnabled():
     '''Called from Javascript whenever freeplay mode is toggled on/off'''
@@ -794,6 +818,7 @@ def handle_setFreeplayEnabled():
         else:
             remote_control_cozmo.cozmo.stop_freeplay_behaviors()
     return ""
+
 
 @flask_app.route('/setDeviceGyroEnabled', methods=['POST'])
 def handle_setDeviceGyroEnabled():
@@ -811,15 +836,18 @@ def handle_setDeviceGyroEnabled():
             remote_control_cozmo.cozmo.drive_wheels(0, 0, 0, 0)
     return ""
 
+
 @flask_app.route('/keydown', methods=['POST'])
 def handle_keydown():
     '''Called from Javascript whenever a key is down (note: can generate repeat calls if held down)'''
     return handle_key_event(request, is_key_down=True)
 
+
 @flask_app.route('/keyup', methods=['POST'])
 def handle_keyup():
     '''Called from Javascript whenever a key is released'''
     return handle_key_event(request, is_key_down=False)
+
 
 @flask_app.route('/dropDownSelect', methods=['POST'])
 def handle_dropDownSelect():
@@ -835,6 +863,7 @@ def handle_dropDownSelect():
 
     return ""
 
+
 @flask_app.route('/sayText', methods=['POST'])
 def handle_sayText():
     '''Called from Javascript whenever the saytext text field is modified'''
@@ -842,6 +871,7 @@ def handle_sayText():
     if remote_control_cozmo:
         remote_control_cozmo.text_to_say = message['textEntered']
     return ""
+
 
 @flask_app.route('/updateCozmo', methods=['POST'])
 def handle_updateCozmo():
@@ -857,6 +887,7 @@ def handle_updateCozmo():
         '''
     return ""
 
+
 def run():
     robot = pycozmo.Client()
     robot.start()
@@ -871,6 +902,7 @@ def run():
 
     # Turn on image receiving by the camera
     robot.enable_camera(enable=True, color=True)
+
 
 if __name__=="__main__":
     run()
