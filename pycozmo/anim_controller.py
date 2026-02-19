@@ -15,6 +15,11 @@ from . import robot
 from . import event
 from . import procedural_face
 from . import image_encoder
+from . import espeakng
+
+import wave
+from io import BytesIO
+import audioop
 
 
 class AnimationQueue:
@@ -195,6 +200,37 @@ class AnimationController:
 
     def play_audio(self, pkts: List[protocol_encoder.OutputAudio]) -> None:
         self.queue.put_audio(pkts)
+    
+    def pcm_to_packets(self, pcm8_bytes):
+        packets = []
+
+        for i in range(0, len(pcm8_bytes), 744):
+            chunk = pcm8_bytes[i:i+744]
+
+            # pad last packet if needed
+            if len(chunk) < 744:
+                chunk += bytes(744 - len(chunk))
+
+            pkt = protocol_encoder.OutputAudio(samples=list(chunk))
+            packets.append(pkt)
+
+        return packets
+   
+    def say_text(self, txt:str):
+        esng = espeakng.ESpeakNG()
+        esng.voice = 'en-us'
+        esng.pitch = 200
+        esng.speed = 200
+        wavs = esng.synth_wav(txt)
+
+        wav = wave.open(BytesIO(wavs))
+        frames = wav.readframes(wav.getnframes())
+
+        pcm8 = audioop.lin2lin(frames, 2, 1)  # 16-bit → 8-bit
+        pcm8 = audioop.bias(pcm8, 1, 128)     # signed → unsigned
+
+        pkts = self.pcm_to_packets(pcm8)
+        self.play_audio(pkts)
 
     def display_image(self, pkt: protocol_encoder.DisplayImage) -> None:
         self.queue.put_image(pkt)
