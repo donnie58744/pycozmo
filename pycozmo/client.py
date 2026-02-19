@@ -599,6 +599,9 @@ class Client(event.Dispatcher):
     def play_audio(self, fspec: str) -> None:
         pkts = audio.load_wav(fspec)
         self.anim_controller.play_audio(pkts)
+    
+    def say_text(self, txt):
+        self.anim_controller.say_text(txt)
 
     def activate_behavior(self, behavior):
         self.add_child_dispatcher(behavior)
