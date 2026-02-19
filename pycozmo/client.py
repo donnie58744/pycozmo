@@ -33,6 +33,11 @@ from . import audio
 from . import anim_controller
 from . import robot_debug
 
+from . import espeakng
+
+import wave
+from io import BytesIO
+import audioop
 
 __all__ = [
     "Client",
@@ -600,8 +605,36 @@ class Client(event.Dispatcher):
         pkts = audio.load_wav(fspec)
         self.anim_controller.play_audio(pkts)
     
+    def pcm_to_packets(self, pcm8_bytes):
+        packets = []
+
+        for i in range(0, len(pcm8_bytes), 744):
+            chunk = pcm8_bytes[i:i+744]
+
+            # pad last packet if needed
+            if len(chunk) < 744:
+                chunk += bytes(744 - len(chunk))
+
+            pkt = protocol_encoder.OutputAudio(samples=list(chunk))
+            packets.append(pkt)
+
+        return packets
+
     def say_text(self, txt):
-        self.anim_controller.say_text(txt)
+        esng = espeakng.ESpeakNG()
+        esng.voice = 'en-us'
+        esng.pitch = 200
+        esng.speed = 75
+        wavs = esng.synth_wav(txt)
+
+        wav = wave.open(BytesIO(wavs))
+        frames = wav.readframes(wav.getnframes())
+
+        pcm8 = audioop.lin2lin(frames, 2, 1)  # 16-bit → 8-bit
+        pcm8 = audioop.bias(pcm8, 1, 128)     # signed → unsigned
+
+        pkts = self.pcm_to_packets(pcm8)
+        self.anim_controller.play_audio(pkts)
 
     def activate_behavior(self, behavior):
         self.add_child_dispatcher(behavior)
