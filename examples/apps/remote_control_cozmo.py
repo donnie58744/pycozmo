@@ -123,6 +123,7 @@ class RemoteControlCozmo:
         self.go_fast = 0
         self.go_slow = 0
 
+        self.cozmo.set_volume(5000)
         self.isHeadlightEnabled = False
 
         self.is_mouse_look_enabled = _is_mouse_look_enabled_by_default
@@ -291,6 +292,7 @@ class RemoteControlCozmo:
         return out_text
     
     def queue_action(self, new_action):
+        # TODO Fix buggy action_queue
         if len(self.action_queue) > 10:
             self.action_queue.pop(0)
         self.action_queue.append(new_action)
@@ -298,8 +300,9 @@ class RemoteControlCozmo:
 
     def try_say_text(self, text_to_say):
         try:
-            # TODO Find say_text function replacement
+            # TODO Waiting for TTS PR to be merged for the function say_text()
             self.cozmo.say_text(text_to_say)
+            self.cozmo.wait_for(pycozmo.event.EvtAudioCompleted)
             return True
         except Exception as e:
             print(e)
@@ -827,10 +830,8 @@ def handle_setDeviceGyroEnabled():
     if remote_control_cozmo:
         is_device_gyro_enabled = message['isDeviceGyroEnabled']
         if is_device_gyro_enabled:
-            print("Gyro ON")
             remote_control_cozmo.is_device_gyro_mode_enabled = True
         else:
-            print("Gyro OFF")
             remote_control_cozmo.is_device_gyro_mode_enabled = False
             # stop movement when turning off gyro mode
             remote_control_cozmo.cozmo.drive_wheels(0, 0, 0, 0)
@@ -876,7 +877,6 @@ def handle_sayText():
 @flask_app.route('/updateCozmo', methods=['POST'])
 def handle_updateCozmo():
     if remote_control_cozmo:
-        remote_control_cozmo.update()
         action_queue_text = ""
         i = 1
         for action in remote_control_cozmo.action_queue:
