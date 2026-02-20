@@ -123,7 +123,7 @@ class RemoteControlCozmo:
         self.go_fast = 0
         self.go_slow = 0
 
-        self.cozmo.set_volume(5000)
+        self.cozmo.set_volume(50000)
         self.isHeadlightEnabled = False
 
         self.is_mouse_look_enabled = _is_mouse_look_enabled_by_default
