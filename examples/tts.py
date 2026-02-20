@@ -1,6 +1,7 @@
 import sys
 import os
 
+"""REMOVE IN PRODUCTION WAITING FOR TTS PR TO BE MERGED"""
 current_dir = os.path.dirname(os.path.abspath(__file__))
 lib_path = os.path.normpath(os.path.join(current_dir, "../"))  # parent of pycozmo
 sys.path.insert(0, lib_path)  # insert at front to take priority
