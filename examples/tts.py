@@ -16,6 +16,6 @@ if __name__ == "__main__":
     robot.start()
     robot.connect()
     robot.wait_for_robot()
-    robot.set_volume(5000)
+    robot.set_volume(50000)
     robot.say_text(txt="Hello World, My name is Cozmo!")
     robot.wait_for(pycozmo.event.EvtAudioCompleted)
