@@ -5,3 +5,4 @@ Pillow>=6.0.0
 flatbuffers
 opencv-python>=4.0.0
 py-espeak-ng>=0.1.8
+flask
