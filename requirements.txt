@@ -3,4 +3,5 @@ dpkt
 numpy
 Pillow>=6.0.0
 flatbuffers
+opencv-python>=4.0.0
 flask
