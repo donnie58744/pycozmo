@@ -8,3 +8,4 @@ py-espeak-ng>=0.1.8
 torch
 torchaudio
 chatterbox-tts
+sox
