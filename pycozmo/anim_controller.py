@@ -16,6 +16,7 @@ from . import event
 from . import procedural_face
 from . import image_encoder
 
+
 class AnimationQueue:
     """ Synchronized animation queue class. """
 
