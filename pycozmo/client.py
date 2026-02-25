@@ -32,11 +32,10 @@ from . import anim_encoder
 from . import audio
 from . import anim_controller
 from . import robot_debug
+from . import cozmo_voice_model
 
 import espeakng
-
-import wave
-from io import BytesIO
+import tempfile
 
 __all__ = [
     "Client",
@@ -604,21 +603,22 @@ class Client(event.Dispatcher):
         pkts = audio.load_wav(fspec)
         self.anim_controller.play_audio(pkts)
     
-    def say_text(self, txt):
-        esng = espeakng.ESpeakNG()
-        esng.voice = 'en-us'
-        esng.pitch = 200
-        esng.speed = 75
-        wavs = esng.synth_wav(txt)
+    def say_text(self, txt, cozmo_voice=False):
+        if (cozmo_voice):
+            wav_bytes = cozmo_voice_model.VoiceClone().clone_voice(text=txt, cfg_weight=0.5, exaggeration=2.0, seed=42)
+        else:
+            esng = espeakng.ESpeakNG()
+            esng.voice = 'en-us'
+            esng.pitch = 200
+            esng.speed = 75
+            wav_bytes = esng.synth_wav(txt)
 
-        audio_bytes = BytesIO(wavs)
-        audio_bytes.seek(0)
-
-        with open("tts.wav", "wb") as f:
-            f.write(audio_bytes.getbuffer())
-
-        pkts = audio.load_wav('tts.wav')
-        self.anim_controller.play_audio(pkts)
+        # Save to temporary file since load_wav expects a filename
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=True) as tmp_file:
+            tmp_file.write(wav_bytes)
+            tmp_file.seek(0)
+            tmp_filename = tmp_file.name
+            self.play_audio(tmp_filename)
 
     def activate_behavior(self, behavior):
         self.add_child_dispatcher(behavior)
